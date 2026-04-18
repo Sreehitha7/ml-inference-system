@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ML Inference Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">◈</span>
+        <span class="brand-name">ML Inference Console</span>
+      </div>
+      <div class="health-badge" id="healthBadge">
+        <span class="health-dot" id="healthDot"></span>
+        <span class="health-label" id="healthLabel">Checking…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main Layout ────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Left: Form Panel -->
+    <section class="panel panel-form">
+      <div class="panel-header">
+        <h2 class="panel-title">Input Features</h2>
+        <p class="panel-subtitle">Iris flower measurements (cm)</p>
+      </div>
+
+      <div class="form-grid">
+        <div class="field-group">
+          <label class="field-label" for="sepalLength">
+            Sepal Length
+            <span class="field-unit">cm</span>
+          </label>
+          <input class="field-input" id="sepalLength" type="number"
+                 step="0.1" min="0.1" max="20" placeholder="e.g. 5.1"
+                 aria-describedby="sepalLengthHint" />
+          <span class="field-hint" id="sepalLengthHint">Typical range: 4.3 – 7.9</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="sepalWidth">
+            Sepal Width
+            <span class="field-unit">cm</span>
+          </label>
+          <input class="field-input" id="sepalWidth" type="number"
+                 step="0.1" min="0.1" max="20" placeholder="e.g. 3.5"
+                 aria-describedby="sepalWidthHint" />
+          <span class="field-hint" id="sepalWidthHint">Typical range: 2.0 – 4.4</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="petalLength">
+            Petal Length
+            <span class="field-unit">cm</span>
+          </label>
+          <input class="field-input" id="petalLength" type="number"
+                 step="0.1" min="0.1" max="20" placeholder="e.g. 1.4"
+                 aria-describedby="petalLengthHint" />
+          <span class="field-hint" id="petalLengthHint">Typical range: 1.0 – 6.9</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="petalWidth">
+            Petal Width
+            <span class="field-unit">cm</span>
+          </label>
+          <input class="field-input" id="petalWidth" type="number"
+                 step="0.1" min="0.1" max="20" placeholder="e.g. 0.2"
+                 aria-describedby="petalWidthHint" />
+          <span class="field-hint" id="petalWidthHint">Typical range: 0.1 – 2.5</span>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-predict" id="predictBtn" onclick="runPrediction()">
+          <span class="btn-label">Run Inference</span>
+          <span class="btn-icon">→</span>
+        </button>
+        <button class="btn-sample" onclick="fillSample()">Load Sample</button>
+      </div>
+
+      <!-- Sample presets -->
+      <div class="presets">
+        <span class="presets-label">Presets:</span>
+        <button class="preset-chip" onclick="fillPreset(0)">Setosa</button>
+        <button class="preset-chip" onclick="fillPreset(1)">Versicolor</button>
+        <button class="preset-chip" onclick="fillPreset(2)">Virginica</button>
+      </div>
+    </section>
+
+    <!-- Right: Results Panel -->
+    <section class="panel panel-results">
+      <div class="panel-header">
+        <h2 class="panel-title">Prediction Output</h2>
+        <span class="request-count" id="requestCount">0 requests</span>
+      </div>
+
+      <!-- Idle state -->
+      <div class="result-idle" id="resultIdle">
+        <div class="idle-icon">⬡</div>
+        <p class="idle-text">Submit measurements to run inference</p>
+      </div>
+
+      <!-- Loading state -->
+      <div class="result-loading hidden" id="resultLoading">
+        <div class="spinner"></div>
+        <p class="loading-text">Running inference…</p>
+      </div>
+
+      <!-- Result state -->
+      <div class="result-output hidden" id="resultOutput">
+        <div class="result-primary">
+          <span class="result-label">Predicted Species</span>
+          <span class="result-value" id="resultSpecies">—</span>
+        </div>
+
+        <div class="confidence-row">
+          <span class="conf-label">Confidence</span>
+          <div class="conf-bar-wrap">
+            <div class="conf-bar" id="confBar"></div>
+          </div>
+          <span class="conf-pct" id="confPct">—</span>
+        </div>
+
+        <div class="prob-table" id="probTable"></div>
+
+        <div class="meta-row">
+          <div class="meta-item">
+            <span class="meta-label">Latency</span>
+            <span class="meta-value" id="metaLatency">—</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Model</span>
+            <span class="meta-value" id="metaModel">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error state -->
+      <div class="result-error hidden" id="resultError">
+        <div class="error-icon">⚠</div>
+        <p class="error-title">Inference Failed</p>
+        <p class="error-msg" id="errorMsg">An unexpected error occurred.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer class="footer">
+    <span>ML Inference Console · FastAPI + scikit-learn · Model: <span id="footerModel">Loading…</span></span>
+    <span class="footer-sep">|</span>
+    <span>Endpoint: <code>POST /predict</code></span>
+  </footer>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
